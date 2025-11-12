@@ -78,24 +78,20 @@
 import React, { useState, useEffect } from 'react';
 import "./shopping.css";
 import { useParams, useNavigate } from 'react-router-dom';
-import sanpham from './components/FullList/List';
+import sanphamList from './components/FullList/List';
 
 const Shopping = () => {
   const [count, setCount] = useState(1);
   const { id } = useParams();
   const navigate = useNavigate();
-  const [sanpham, setSanpham] = useState([]);
+  const [products, setProducts] = useState(sanphamList);
 
   useEffect(() => {
     const storedProducts = localStorage.getItem('sanpham');
-    if (storedProducts) {
-      setSanpham(JSON.parse(storedProducts));
-    } else {
-      setSanpham(sanphamStatic);
-    }
+    if (storedProducts) setProducts(JSON.parse(storedProducts));
   }, []);
 
-  const product = sanpham.find(item => String(item.id) === id);
+  const product = products.find(item => String(item.id) === id);
 
   const decrease = () => {
     if (count > 1) setCount(prev => prev - 1);
