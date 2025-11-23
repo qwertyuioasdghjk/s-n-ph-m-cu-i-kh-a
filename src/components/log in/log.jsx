@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './style.css';
 import useUser from '../../hooks/useUser';
 import LoginForm from './loginForm';
-import UserList from '../../hooks/userList'; // Danh sách người dùng mặc định
+import { safeSetItem, safeSetJSON } from '../../utils/storage';
 
 const Login = () => {
   const { isAuthenticated, setLoginUser } = useUser();
@@ -14,40 +14,36 @@ const Login = () => {
     password: ''
   });
 
-  const handleLoginSubmit = (event) => {
+  const handleLoginSubmit = async (event) => {
     event.preventDefault();
-
-    // Lấy danh sách user từ localStorage (nếu có)
-    const storedUsers = JSON.parse(localStorage.getItem('users')) || [];
-
-    // Kết hợp user từ localStorage và UserList tĩnh
-    const combinedUsers = [...storedUsers, ...UserList];
-
-    // Tìm người dùng hợp lệ
-    const matchedUser = combinedUsers.find(
-      (user) =>
-        user.username === loginFormValue.name &&
-        user.password === loginFormValue.password
-    );
-
-    if (!matchedUser) {
-      alert('Sai thông tin đăng nhập');
-      return;
+    try {
+      const res = await fetch('/api/v1/users/sign-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username: loginFormValue.name, password: loginFormValue.password })
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = body.error || 'Đăng nhập thất bại';
+        alert(msg);
+        return;
+      }
+      const data = await res.json();
+      const user = data.user;
+      if (data.accessToken) safeSetItem('accessToken', data.accessToken);
+      if (data.refreshToken) safeSetItem('refreshToken', data.refreshToken);
+      setLoginUser(user);
+      safeSetJSON('currentUser', user);
+      alert('Đăng nhập thành công!');
+      navigate('/home');
+    } catch (err) {
+      console.error('Login error:', err);
+      alert('Không thể kết nối máy chủ. Vui lòng thử lại.');
     }
-
-    // Đăng nhập thành công
-    setLoginUser(matchedUser);
-    localStorage.setItem('currentUser', JSON.stringify(matchedUser));
-
-    alert('Đăng nhập thành công!');
-    navigate('/dashboard');
   };
 
-
-  
-  
-
-  const handleSignupClick = () => navigate('/signin');
+  const handleSignupClick = () => navigate('/signup');
   const handleForgotClick = () => alert('Liên hệ quản trị viên để lấy lại mật khẩu.');
 
   useEffect(() => {
@@ -55,8 +51,6 @@ const Login = () => {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
-
-
 
   return (
     <div className="login">

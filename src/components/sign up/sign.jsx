@@ -95,6 +95,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './style.css';
+import { safeSetItem, safeSetJSON } from '../../utils/storage'; // added import
 
 function Apple() {
   const [form, setForm] = useState({
@@ -114,40 +115,56 @@ function Apple() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const userExists = users.some(user => user.username === form.username);
-    if (userExists) {
-      alert('Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.');
-      return;
-    }
-
+    // client-side validation
     const phoneRegex = /^[0-9]{9,11}$/;
     if (!phoneRegex.test(form.phone)) {
       alert('Số điện thoại không hợp lệ.');
       return;
     }
-
     if (form.password.length < 6) {
       alert('Mật khẩu phải có ít nhất 6 ký tự.');
       return;
     }
 
-    users.push(form);
-    localStorage.setItem('users', JSON.stringify(users));
-    alert('Đăng ký thành công!');
+    try {
+      const res = await fetch('/api/v1/users/sign-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // keep if backend uses cookies; remove if not needed
+        body: JSON.stringify(form)
+      });
 
-    setForm({
-      username: '',
-      email: '',
-      phone: '',
-      password: '',
-      role:'user'
-    });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = body.error || body.message || 'Đăng ký thất bại';
+        alert(msg);
+        return;
+      }
 
-    navigate('/login');
+      const data = await res.json().catch(() => ({}));
+      // persist if backend returns tokens or user
+      if (data.accessToken) safeSetItem('accessToken', data.accessToken);
+      if (data.refreshToken) safeSetItem('refreshToken', data.refreshToken);
+      if (data.user) safeSetJSON('currentUser', data.user);
+
+      alert('Đăng ký thành công!');
+      // reset form
+      setForm({
+        username: '',
+        email: '',
+        phone: '',
+        password: '',
+        role: 'user'
+      });
+
+      navigate('/login');
+    } catch (err) {
+      console.error('Signup error:', err);
+      alert('Không thể kết nối máy chủ. Vui lòng thử lại.');
+    }
   };
 
   return (

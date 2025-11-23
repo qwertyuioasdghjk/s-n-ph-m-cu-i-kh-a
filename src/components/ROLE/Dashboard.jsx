@@ -11,6 +11,8 @@ const Dashboard = () => {
   const { user, logoutUser, isAuthenticated, loading } = useUser();
   const [showAdminProductManager, setShowAdminProductManager] = useState(false);
   const [showttcn,setshowttcn] = useState(false);
+  const [showUserManager, setShowUserManager] = useState(false);
+  const [usersList, setUsersList] = useState([]);
 
   // Điều hướng về login nếu chưa đăng nhập
   useEffect(() => {
@@ -23,6 +25,49 @@ const Dashboard = () => {
   const handleLogout = () => {
     logoutUser();
     navigate('/login');
+  };
+
+  const loadUsers = async () => {
+    try {
+      const token = localStorage.getItem('accessToken') || '';
+      const res = await fetch('/api/v1/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setUsersList(data.users || []);
+    } catch {}
+  };
+
+  const handleToggleUserManager = async () => {
+    const next = !showUserManager;
+    setShowUserManager(next);
+    if (next) await loadUsers();
+  };
+
+  const deleteUser = async (id) => {
+    try {
+      const token = localStorage.getItem('accessToken') || '';
+      const res = await fetch(`/api/v1/users/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      await loadUsers();
+    } catch {}
+  };
+
+  const toggleActive = async (u) => {
+    try {
+      const token = localStorage.getItem('accessToken') || '';
+      const res = await fetch(`/api/v1/users/${u.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ active: !u.active })
+      });
+      if (!res.ok) return;
+      await loadUsers();
+    } catch {}
   };
 
   // Đang loading
@@ -48,6 +93,7 @@ const Dashboard = () => {
             {/* <button onClick={() => navigate('/admin/users')}>👥 Quản lý người dùng</button>
             <button onClick={() => navigate('/admin/system')}>🛠️ Quản lý hệ thống</button> */}
             <button onClick={() => setShowAdminProductManager(true)}>✏️ Chỉnh sửa sản phẩm</button>
+            <button onClick={handleToggleUserManager}>👥 Xem danh sách người dùng</button>
           </div>
 
           
@@ -55,6 +101,24 @@ const Dashboard = () => {
             <div className="edit-product-wrapper">
               <h4>📝 Trình chỉnh sửa sản phẩm</h4>
               <AdminProductManager />
+            </div>
+          )}
+          {showUserManager && (
+            <div className="edit-product-wrapper">
+              <h4>👥 Danh sách người dùng</h4>
+              {usersList.map(u => (
+                <div key={u.id} className="product-card">
+                  <p><strong>Tên:</strong> {u.username}</p>
+                  <p><strong>Vai trò:</strong> {u.role}</p>
+                  <p><strong>Trạng thái:</strong> {u.active ? 'Hoạt động' : 'Khóa'}</p>
+                  <div className="admin-buttons">
+                    <button onClick={() => toggleActive(u)}>{u.active ? 'Khóa' : 'Mở khóa'}</button>
+                    {u.role !== 'admin' && (
+                      <button onClick={() => deleteUser(u.id)}>Xóa</button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

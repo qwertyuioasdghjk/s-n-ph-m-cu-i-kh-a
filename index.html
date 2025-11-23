@@ -8,6 +8,27 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <script>
+      (function() {
+        const origWarn = console.warn;
+        console.warn = function(...args) {
+          try {
+            const first = args[0];
+            if (typeof first === 'string' &&
+                first.indexOf('[antd: Menu]') !== -1 &&
+                first.indexOf('children') !== -1 &&
+                first.indexOf('deprecated') !== -1) {
+              return; 
+            }
+          } catch (e) {
+            // ignore filter errors
+          }
+          origWarn.apply(console, args);
+        };
+      })();
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

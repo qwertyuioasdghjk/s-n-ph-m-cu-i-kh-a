@@ -1,0 +1,27 @@
+.admin-page {
+  padding: 20px;
+}
+.users-table {
+  margin-top: 12px;
+  border-collapse: collapse;
+  width: 100%;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1fr 0.8fr 1.2fr;
+  gap: 12px;
+  padding: 8px 0;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+.row.header {
+  font-weight: 600;
+  border-bottom: 2px solid #ccc;
+}
+.actions button {
+  margin-right: 8px;
+}
+.actions button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
