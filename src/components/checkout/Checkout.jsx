@@ -48,13 +48,29 @@ const CheckoutPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleApplyCoupon = () => {
-    if (coupon.trim().toUpperCase() === 'DISCOUNT10') {
-      setDiscount(subtotal * 0.1);
-      alert('Áp dụng mã giảm giá 10% thành công!');
-    } else {
-      setDiscount(0);
-      alert('Mã giảm giá không hợp lệ!');
+  const handleApplyCoupon = async () => {
+    const code = String(coupon || '').trim().toUpperCase()
+    try {
+      const res = await fetch('/api/coupons/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, total: subtotal })
+      })
+      if (!res.ok) {
+        try {
+          const err = await res.json()
+          alert(err?.error || 'Mã giảm giá không hợp lệ!')
+        } catch {
+          alert('Mã giảm giá không hợp lệ!')
+        }
+        setDiscount(0)
+        return
+      }
+      const data = await res.json()
+      setDiscount(data.discount || 0)
+    } catch {
+      alert('Không thể áp dụng mã giảm giá. Vui lòng thử lại.')
+      setDiscount(0)
     }
   };
 

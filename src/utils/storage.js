@@ -1,8 +1,8 @@
 const memoryStore = {};
 
 function isLocalStorageAvailable() {
-	
 	try {
+		if (typeof window === 'undefined' || !window.localStorage) return false;
 		const key = '__storage_test__';
 		window.localStorage.setItem(key, key);
 		window.localStorage.removeItem(key);
@@ -12,17 +12,17 @@ function isLocalStorageAvailable() {
 	}
 }
 
-const hasLocal = typeof window !== 'undefined' && isLocalStorageAvailable();
+const hasLocal = isLocalStorageAvailable();
 
 export function safeGetItem(key) {
 	if (hasLocal) {
 		try {
 			return window.localStorage.getItem(key);
 		} catch (e) {
-			
+			// fall through to memory fallback
 		}
 	}
-	return memoryStore.hasOwnProperty(key) ? memoryStore[key] : null;
+	return Object.prototype.hasOwnProperty.call(memoryStore, key) ? memoryStore[key] : null;
 }
 
 export function safeSetItem(key, value) {
@@ -51,7 +51,7 @@ export function safeRemoveItem(key) {
 
 export function safeGetJSON(key) {
 	const v = safeGetItem(key);
-	if (!v) return null;
+	if (v === null || v === undefined) return null;
 	try {
 		return JSON.parse(v);
 	} catch {

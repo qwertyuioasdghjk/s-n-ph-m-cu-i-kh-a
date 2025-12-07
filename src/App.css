@@ -1,5 +1,5 @@
 @import "tailwindcss";
-/* Đặt background toàn màn hình */
+
 .not-found {
   display: flex;
   justify-content: center;

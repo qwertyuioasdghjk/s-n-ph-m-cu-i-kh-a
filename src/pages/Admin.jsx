@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useUser from '../hooks/useUser';
 import './admin.css';
-import { safeGetJSON, safeSetJSON } from '../utils/storage'; // added safeSetJSON
+import { safeGetJSON, safeSetJSON } from '../utils/storage'; 
 
 export default function Admin() {
   const { isAuthenticated } = useUser();
@@ -93,7 +93,7 @@ export default function Admin() {
   };
 
   const handleSetLocalAdmin = () => {
-    // create a minimal test admin; adjust fields as your backend expects
+    
     const testAdmin = {
       id: 'dev-admin',
       username: 'dev-admin',
@@ -102,12 +102,12 @@ export default function Admin() {
       role: 'admin'
     };
     safeSetJSON('currentUser', testAdmin);
-    // reload to let the component re-check currentUser and proceed
+    
     window.location.reload();
   };
 
   const currentUserId = (() => {
-    const cu = safeGetJSON('currentUser'); // safe read
+    const cu = safeGetJSON('currentUser'); 
     return cu ? (cu.id || cu._id || cu.username) : null;
   })();
 
@@ -115,7 +115,7 @@ export default function Admin() {
     <div className="admin-page">
       <h1>Admin Panel</h1>
 
-      {/* dev-only helper banner */}
+     
       {showDevHelper && process.env.NODE_ENV === 'development' && (
         <div style={{ margin: '12px 0', padding: '10px', border: '1px dashed #f90', background: '#fff8e6' }}>
           <div style={{ marginBottom: 8 }}>Dev: no admin found. For quick local testing you can create a temporary admin:</div>

@@ -6,11 +6,11 @@ import { useNavigate } from "react-router";
 const ProductList = () => {
     const navigate = useNavigate();
     
-    // 1. Dùng state để lưu sản phẩm và trạng thái loading
+   
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [bannerIndex, setBannerIndex] = useState(0);
 
-    // 2. Dùng useEffect để gọi API khi component được tải
     useEffect(() => {
         const load = async () => {
             try {
@@ -28,20 +28,56 @@ const ProductList = () => {
     }, []);
 
     const handleProductClick = (product) => {
-        // Chuyển hướng đến trang shopping
-        navigate(`/shopping/${product.id}`, { state: { product } });
-    };    
+        const pid = product.id || product._id
+        navigate(`/shopping/${pid}`, { state: { product } });
+    }    
+
+    useEffect(() => {
+        if (!products || products.length === 0) return
+        const max = Math.min(5, products.length)
+        const t = setInterval(() => {
+            setBannerIndex((i) => (i + 1) % max)
+        }, 4000)
+        return () => clearInterval(t)
+    }, [products])
+
+    const bannerItems = products.slice(0, 5)
+    const current = bannerItems[bannerIndex]
+    const prev = () => setBannerIndex((i) => (i - 1 + bannerItems.length) % bannerItems.length)
+    const next = () => setBannerIndex((i) => (i + 1) % bannerItems.length)
 
     if (loading) {
         return <div>Đang tải sản phẩm...</div>;
     }
 
     return (
-        <div className="product-list">
-            {/* 4. Lấy dữ liệu từ state 'products' thay vì 'sanpham' */}
+        <>
+            {bannerItems.length > 0 && (
+                <div className="banner">
+                    <div className="banner-inner" onClick={() => handleProductClick(current)}>
+                        <img className="banner-image" src={current.Image} alt={current.name} />
+                        <div className="banner-info">
+                            <h2>{current.name}</h2>
+                            <p>{current.price}</p>
+                            <button className="banner-cta">Xem chi tiết</button>
+                        </div>
+                    </div>
+                    <div className="banner-controls">
+                        <button className="banner-prev" onClick={prev}>‹</button>
+                        <button className="banner-next" onClick={next}>›</button>
+                    </div>
+                    <div className="banner-dots">
+                        {bannerItems.map((_, idx) => (
+                            <span key={idx} className={idx === bannerIndex ? 'dot active' : 'dot'} onClick={() => setBannerIndex(idx)} />
+                        ))}
+                    </div>
+                </div>
+            )}
+            <div className="product-list">
+           
             {products.map((product) => (
                 <div 
-                    key={product.id}
+                    key={product.id || product._id}
                     className="product-card" 
                     onClick={() => handleProductClick(product)}
                 >
@@ -55,7 +91,8 @@ const ProductList = () => {
                     <p className="product-description">{product.description}</p>
                 </div>
             ))}
-        </div>
+            </div>
+        </>
     );
 };
 
